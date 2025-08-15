@@ -109,5 +109,170 @@ RabbitMQ는 push알림, 필터링 기능(욕설) 등 부가 기능도 많고, Re
 <br>
 그럼에도 불구하고 Redis pub/sub을 사용한 이유는 채팅 특성상 신뢰성 있는 전송보다 빠른 전송을 구현하는게 목적이었습니다. 
 
+---
+
+## 트러블 슈팅
+성능 테스트(K6) <br>
+테스트 시나리오: 로그인 + 1대1 채팅방 생성 + 실시간 메시지 송수신<br>
+결과 <br>
+<br>
+50명 동시 접속 ✅<br><br>
+📊 성능 지표:
+- HTTP p(95): 117ms
+- WebSocket 연결: 18.6ms
+- 인증 성공률: 100%
+- 채팅방 생성률: 100%
+- HTTP 실패율: 0.17%
+
+<br>
 
 
+100명 동시 접속 ✅ <br><br>
+📊 성능 지표:
+- HTTP p(95): 110ms
+- WebSocket 연결: 13ms  
+- 인증 성공률: 100%
+- 채팅방 생성률: 100%
+- HTTP 실패율: 0.04%
+
+<br>
+
+200명 동시 접속 ⚠️<br><br>
+📊 성능 지표:
+- HTTP p(95): 4.33초
+- WebSocket 연결: 1.99초
+- 인증 성공률: 100%
+- 채팅방 생성률: 100%
+- HTTP 실패율: 0.02%
+- 테스트 완료율: 83% (140개 중단)
+
+## 🎯 결과: 성능 저하 시작, 응답시간 40배 증가<br>
+
+성능급락지점 <br>
+100-200명 사이에서 급격한 성능 저하 발생<br>
+응답시간이 40배 증가 (110ms → 4.33초)<br>
+WebSocket 연결이 150배 증가 (13ms → 1.99초)<br><br>
+
+단계별 개선 목표<br><br>
+
+Phase 1: 200명 안정화 <br>
+- HTTP p(95) < 300ms (현재: 4.33초)
+- WebSocket 연결 p(95) < 200ms (현재: 1.99초)
+- 채팅방 생성률 > 99%
+- 테스트 완료율 > 95%
+
+<br>
+
+Phase 2: 100명 초고속화 (HTTP p95 < 50ms)<br>
+- HTTP p(95) < 50ms (현재: 110ms)
+- WebSocket 연결 p(95) < 20ms (현재: 13ms)
+- 실시간 채팅 입장 시간 최소화
+- 사용자 체감 성능 극대화
+
+## 🔍 Spring Boot Actuator를 통한 성능 분석
+환경 설정
+
+기술 스택: Java/Spring Boot 3.x, MySQL, Redis, STOMP WebSocket
+테스트 환경: 로컬 Docker (MySQL/Redis)
+
+Actuator 설정
+yaml#
+```
+build.gradle
+implementation 'org.springframework.boot:spring-boot-starter-actuator'
+```
+``` yml
+application.yml
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,metrics,info,env
+  endpoint:
+    health:
+      show-details: always
+```
+### 🚨 발견된 주요 성능 이슈
+1. GC(Garbage Collection) 급증 문제
+측정 결과:
+
+테스트 전: 37회 GC, 0.75초
+테스트 중: 160회 GC, 1.245초
+GC 횟수 4배 증가, 처리 시간 66% 증가
+
+원인 분석:
+
+200명 동시 접속으로 인한 메모리 할당 급증
+WebSocket 연결 및 채팅 메시지 처리 과정에서 대량 객체 생성
+현재 JVM 기본 힙 메모리 설정 부족
+
+2. 채팅 API 성능 병목
+측정 결과:
+- 828회 채팅 API 요청
+- 총 처리 시간: 85.5초
+- 평균 응답시간: 103ms
+- HTTP 상태: 400 에러와 200 성공 혼재
+문제점:
+
+평균 응답시간 103ms로 목표 대비 느림
+400 Bad Request 에러 빈발
+동시성 처리 문제로 인한 데이터 충돌 의심
+
+3. 메모리 사용량 증가
+측정 결과:
+
+테스트 전: 241MB
+테스트 후: 276MB
+35MB 증가 (정상 범위이지만 지속 모니터링 필요)
+
+--- 
+
+### 🎯 해결 방안
+1. JVM 메모리 최적화 (우선순위 1)
+힙 메모리 증설:
+bashjava -jar -Xms1g -Xmx2g -XX:+UseG1GC -XX:MaxGCPauseMillis=100 your-app.jar
+G1GC 최적화:
+bash-XX:G1HeapRegionSize=16m
+-XX:MaxGCPauseMillis=50
+2. 채팅 API 성능 개선 (우선순위 2)
+즉시 개선 가능한 부분:
+
+400 에러 원인 분석 및 해결
+채팅 관련 JPA 쿼리 최적화 (N+1 문제 해결)
+@Transactional 범위 최소화
+
+중장기 개선:
+
+Redis 캐싱 전략 도입 (채팅방 정보, 참여자 목록)
+메시지 저장 비동기 처리
+채팅 관련 인덱스 최적화
+
+3. 데이터베이스 커넥션 풀 튜닝
+현재 상태:
+
+총 커넥션: 10개
+활성 커넥션: 2개 (여유 있음)
+
+개선 설정:
+yamlspring:
+  datasource:
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 10
+      connection-timeout: 20000
+      leak-detection-threshold: 60000
+
+📈 모니터링 지표
+핵심 모니터링 엔드포인트
+
+/actuator/metrics/jvm.gc.pause - GC 성능
+/actuator/metrics/http.server.requests - API 응답시간
+/actuator/metrics/jvm.memory.used - 메모리 사용량
+/actuator/metrics/hikaricp.connections.active - DB 커넥션
+
+성능 임계치 설정
+
+GC 횟수: 테스트 중 100회 이하 목표
+평균 API 응답시간: 50ms 이하 목표
+메모리 사용량: 1GB 이하 유지
+400 에러율: 1% 이하 목표
