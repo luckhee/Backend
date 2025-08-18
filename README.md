@@ -54,6 +54,7 @@ Infra - Vercel , GCP VM, Nginx
 </div>
 
 
+
 <br>
 
 ## 아키텍쳐
@@ -96,6 +97,14 @@ Infra - Vercel , GCP VM, Nginx
 <br>
 
 ## 담당한 기능 - 채팅
+<div align="center">
+  <img src="https://i.postimg.cc/kgnG5nNJ/1.png">
+
+  <img src="https://i.postimg.cc/L53Rd1bz/2.png">
+</div>
+
+
+
 ### SSE VS Websocket
 websocket을 사용해서 클라이언트와 서버간 통신을 구현했습니다. <br><br>
 최초에 SSE와 Websocket 중 고민 했고 실시간 채팅 기능 구현이 목적이라 Websocket을 선택했습니다.<br> 
