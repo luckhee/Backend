@@ -4,3 +4,11 @@ spring:
     username: sa
     password:
     driver-class-name: org.h2.Driver
+  
+  jpa:
+    properties:
+      hibernate:
+        jdbc:
+          batch_size: 100        # 배치 처리 최적화
+        order_inserts: true     # INSERT 순서 최적화
+        order_updates: true     # UPDATE 순서 최적화

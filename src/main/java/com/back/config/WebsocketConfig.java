@@ -28,6 +28,10 @@ public class WebsocketConfig implements WebSocketMessageBrokerConfigurer {
                         "https://frontend-devteam-10.vercel.app",
                         "https://www.devteam10.org")
                 .withSockJS();
+        
+        // k6 테스트용 순수 WebSocket 엔드포인트 추가
+        registry.addEndpoint("/chat-direct")
+                .setAllowedOriginPatterns("*");
     }
 
     @Override

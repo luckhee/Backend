@@ -17,6 +17,10 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.MySQL8Dialect
         format_sql: true
+        jdbc:
+          batch_size: 100        # 배치 처리 최적화
+        order_inserts: true     # INSERT 순서 최적화
+        order_updates: true     # UPDATE 순서 최적화
 
 #spring:
 #  # H2 Database 설정
