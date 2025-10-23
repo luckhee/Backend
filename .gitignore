@@ -53,3 +53,8 @@ C:/
 uploads/
 *.png
 
+k6-tests/
+artillery-tests
+
+CLAUDE.md
+CHAT_PERFORMANCE_OPTIMIZATION.md
