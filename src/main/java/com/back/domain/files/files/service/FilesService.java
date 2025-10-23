@@ -28,25 +28,25 @@ public class FilesService {
 
     private final FilesRepository filesRepository;
     private final FileStorageService fileStorageService;
-    private final PostRepository postRepository;
+    private final PostRepository postRepository; // 이게 여기에 있는게 맞는지?
     private final Rq rq;
 
     // 파일 업로드 서비스 (동기 호출)
     public RsData<String> uploadFiles(Long postId, MultipartFile[] files) { // 반환 타입을 RsData<String>으로 변경
-        Post post = postRepository.findById(postId)
+        Post post = postRepository.findById(postId)// 엔티티 그대로 노출
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 게시글입니다: " + postId));
 
         if (rq.getMember() == null || !rq.getMember().getId().equals(post.getMember().getId())) {
             throw new IllegalArgumentException("게시글 작성자만 파일을 업로드할 수 있습니다.");
-        }
+        } // 헬퍼 메소드 분리
 
         // 비동기 파일 업로드 메서드 호출
-        uploadFilesAsync(post, files);
+        uploadFilesAsync(post, files); // 비동기 적으로 실행되어야 하는 이유는?
 
         // 파일 처리 시작을 알리는 즉각적인 응답
         return new RsData<>(
                 "200",
-                "파일 업로드가 시작되었습니다. 완료 시 별도의 알림은 전송되지 않습니다.",
+                "파일 업로드가 시작되었습니다. 완료 시 별도의 알림은 전송되지 않습니다.", // 완료 시 별도의 알림 전송 되도록 수정(DTO로 전송)
                 "Upload initiated"
         );
     }
@@ -116,7 +116,7 @@ public class FilesService {
     public RsData<Void> deleteFile(Long postId, Long fileId) {
 
         Files file = filesRepository.findById(fileId)
-                .orElseThrow(() -> new IllegalArgumentException("파일이 존재하지 않습니다: " + fileId));
+                .orElseThrow(() -> new IllegalArgumentException("파일이 존재하지 않습니다: " + fileId)); // 반복.
 
         if (!file.getPost().getId().equals(postId)) {
             throw new IllegalArgumentException("해당 게시글에 속하지 않는 파일입니다: " + fileId);
@@ -128,7 +128,7 @@ public class FilesService {
 
         Long currentMemberId = rq.getMemberId();
         if (!file.getPost().getMember().getId().equals(currentMemberId)) {
-            throw new IllegalArgumentException("해당 파일을 삭제할 권한이 없습니다. 현재 사용자 ID: " + currentMemberId);
+            throw new IllegalArgumentException("해당 파일을 삭제할 권한이 없습니다. 현재 사용자 ID: " + currentMemberId); // 현재 사용자 ID를 제공해줘야 하는지?
         }
 
         deletePhysicalFileSafely(file.getFileUrl());
@@ -144,7 +144,7 @@ public class FilesService {
             return new RsData<>("403-1", "관리자 권한이 필요합니다.", null);
         }
 
-        Page<Files> filesPage = filesRepository.findAll(pageable);
+        Page<Files> filesPage = filesRepository.findAll(pageable); // QueryDSL 사용
 
         Page<FileUploadResponseDto> dtoPage = filesPage.map(FileUploadResponseDto::from);
 
