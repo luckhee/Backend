@@ -21,7 +21,7 @@ public class FileDownloadController {
     private final FileStorageService fileStorageService;
 
     // 파일 다운로드 API
-    @GetMapping("/**")
+    @GetMapping("/**") // 파일 다운로드가 왜 필요한건지? 내 컴퓨터에서 다운로드인건지 아니면 스토리지에서 다운로드인건지?
     public ResponseEntity<Resource> downloadFile(HttpServletRequest request) {
         String fileUrl = request.getRequestURI();
         // 경로 순회 공격 방지

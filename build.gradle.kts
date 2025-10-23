@@ -57,6 +57,9 @@ dependencies {
     // Redis 관련 추가
     implementation("org.springframework.boot:spring-boot-starter-data-redis")
 
+    // AWS S3 SDK (MinIO 연동용)
+    implementation("software.amazon.awssdk:s3:2.20.0")
+
 }
 dependencyManagement {
     imports {

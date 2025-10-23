@@ -23,19 +23,19 @@ public class FilesController {
     private final FilesService filesService;
 
     @Operation(summary = "파일 업로드", description = "게시글에 파일을 업로드 합니다")
-    @PostMapping(value = "/{postId}/files", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(value = "/{postId}/files", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)// consumes? 가 왜 들어감? 뭐임?
     // uploadFiles 메서드의 반환 타입을 RsData<String>으로 변경
     public RsData<String> uploadFiles(
             @PathVariable @Positive long postId,
             @Parameter(description = "업로드할 파일들", required = false)
-            @RequestPart(value = "files", required = false) MultipartFile[] files
+            @RequestPart(value = "files", required = false) MultipartFile[] files // MultipartFile 인터페이스 확인해보기.
     ) {
         // 서비스 호출 결과(즉각적인 응답)를 그대로 반환
         return filesService.uploadFiles(postId, files);
     }
 
     // 파일 조회
-    @Operation(summary = "파일 조회", description = "게시글의 파일을 조회합니다")
+    @Operation(summary = "파일 조회", description = "게시글의 파일을 조회합니다") // 이파일 조회랑 admin 파일 조회랑 뭐가 다름?
     @GetMapping("/{postId}/files")
     public RsData<List<FileUploadResponseDto>> getFilesByPostId(@PathVariable Long postId) {
         return filesService.getFilesByPostId(postId);

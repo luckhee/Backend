@@ -22,40 +22,17 @@ spring:
         order_inserts: true     # INSERT 순서 최적화
         order_updates: true     # UPDATE 순서 최적화
 
-#spring:
-#  # H2 Database 설정
-#  datasource:
-#    driver-class-name: org.h2.Driver
-#    url: jdbc:h2:./db_dev;MODE=MySQL
-#    username: sa
-#    password:
-#
-#  # H2 Console 설정
-#  h2:
-#    console: # H2 DB를 웹에서 관리할 수 있는 기능
-#      enabled: true           # H2 Console 사용 여부
-#      path: /h2-console       # H2 Console 접속 주소
-#
-#  # JPA 설정
-#  jpa:
-#    database-platform: org.hibernat
-
 #redis 설정
   data:
     redis:
       host: localhost
       port: 6379
 
-# 로컬 업로드(개발용)
-file:
-  upload-dir: C:/Temp/uploads
-
 # 테스트용
-# 객체 스토리지(GCS, S3 등)
 cloud:
-  gcp:
-    project-id: ${GCP_PROJECT_ID}
-    credentials:
-      location: ${GCP_CREDENTIALS_LOCATION}
-    storage:
-      bucket-name: ${GCP_BUCKET_NAME}
+  storage:
+    type: minio
+    endpoint: http://localhost:9000
+    access-key: admin
+    secret-key: adminPassword123
+    bucket-name: dev-bucket
