@@ -33,7 +33,6 @@ public class MinioFileStorageService implements FileStorageService {
 
     @Override
     public String storeFile(MultipartFile file, String subFolder) {
-
         // 파일 타입 검증
         String contentType = file.getContentType();
         if (contentType == null || !isAllowedFileType(contentType)) {
