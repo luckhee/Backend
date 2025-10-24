@@ -91,7 +91,7 @@ public class SecurityConfig {
 
         // 허용할 오리진 설정 (개발 환경)
         configuration.setAllowedOrigins(List.of(
-            "http://localhost:3000",
+            "http://localhost:3001",
             "http://34.64.160.179" // 백엔드 서버의 공인 ip입니다.
         ));
 

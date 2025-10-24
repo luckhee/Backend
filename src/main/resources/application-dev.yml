@@ -34,5 +34,5 @@ cloud:
     type: minio
     endpoint: http://localhost:9000
     access-key: admin
-    secret-key: adminPassword123
+    secret-key: dhalwk12!
     bucket-name: dev-bucket
