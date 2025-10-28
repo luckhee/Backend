@@ -8,6 +8,7 @@ import com.back.domain.member.dto.request.FindPasswordRequest;
 import com.back.domain.member.dto.response.MemberMyPageResponse;
 import com.back.domain.member.dto.response.OtherMemberInfoResponse;
 import com.back.domain.member.entity.Member;
+import com.back.domain.member.entity.Status;
 import com.back.domain.member.repository.MemberRepository;
 import com.back.global.exception.ServiceException;
 import com.back.global.rsData.ResultCode;
@@ -184,7 +185,7 @@ public class MemberService {
                 .orElseThrow(() -> new ServiceException(ResultCode.MEMBER_NOT_FOUND.code(), "해당 정보와 일치하는 회원이 없습니다."));
 
         // 2. 새 비밀번호와 확인 비밀번호가 제공되었는지 확인
-        if (request.newPassword() == null || request.newPassword().isBlank() || 
+        if (request.newPassword() == null || request.newPassword().isBlank() ||
             request.confirmPassword() == null || request.confirmPassword().isBlank()) {
             throw new ServiceException(ResultCode.BAD_REQUEST.code(), "새 비밀번호와 확인 비밀번호를 모두 입력해주세요.");
         }
@@ -198,5 +199,29 @@ public class MemberService {
         member.updatePassword(passwordEncoder.encode(request.newPassword()));
         memberRepository.save(member);
     }
-    
+
+    public void validUser(String userEmail) {
+        if(!Boolean.TRUE.equals(isDeleteUser(userEmail))) {
+            throw new ServiceException(ResultCode.BAD_REQUEST.code(), "채팅을 보낼 수 없는 사용자 입니다.");
+        }
+    }
+
+
+
+
+
+    /*헬퍼 메소드*/
+    public Boolean isDeleteUser(String userEmail) {
+        //status
+        boolean status = true;
+        Member member = findByEmail(userEmail);
+        if(member.getStatus() != Status.ACTIVE) return false;
+
+        return status;
+    }
+
+    public Member findByEmail(String userEmail) {
+        return memberRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new ServiceException(ResultCode.MEMBER_NOT_FOUND.code(), "해당 정보와 일치하는 회원이 없습니다."));
+    }
 }
