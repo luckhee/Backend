@@ -22,57 +22,16 @@ public class WebsocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/chat")
-                .setAllowedOriginPatterns("http://localhost:3000",
-                        "http://34.64.160.179",
-                        "https://frontend-devteam-10.vercel.app/",
-                        "https://frontend-devteam-10.vercel.app",
-                        "https://www.devteam10.org")
+                .setAllowedOriginPatterns("*")
                 .withSockJS();
-        
-        // k6 테스트용 순수 WebSocket 엔드포인트 추가
-        registry.addEndpoint("/chat-direct")
-                .setAllowedOriginPatterns("*");
     }
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
-        config.enableSimpleBroker("/topic", "/queue");
-        config.setUserDestinationPrefix("/user");
-        config.setApplicationDestinationPrefixes("/app");
-    }
+        //발행
+        config.setApplicationDestinationPrefixes("/pub");
 
-    @Override
-    public void configureClientInboundChannel(ChannelRegistration registration) {
-        registration.interceptors(new ChannelInterceptor() {
-            @Override
-            public Message<?> preSend(Message<?> message, MessageChannel channel) {
-                StompHeaderAccessor accessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
-
-                if (StompCommand.CONNECT.equals(accessor.getCommand())) {
-                    // STOMP CONNECT 시 user-email 헤더에서 사용자 정보 추출
-                    String userEmail = accessor.getFirstNativeHeader("user-email");
-                    if (userEmail != null) {
-                        accessor.setUser(new StompPrincipal(userEmail));
-                        System.out.println("WebSocket 사용자 설정: " + userEmail);
-                    }
-                }
-
-                return message;
-            }
-        });
-    }
-
-    // 사용자 정의 Principal 클래스
-    public static class StompPrincipal implements Principal {
-        private String name;
-
-        public StompPrincipal(String name) {
-            this.name = name;
-        }
-
-        @Override
-        public String getName() {
-            return name;
-        }
+        //구독
+        config.enableSimpleBroker("/sub");
     }
 }
