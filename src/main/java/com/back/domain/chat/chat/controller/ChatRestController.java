@@ -6,6 +6,8 @@ import com.back.domain.chat.chat.service.ChatService;
 import com.back.global.rsData.RsData;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
+import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
@@ -16,6 +18,18 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ChatRestController {
     private final ChatService chatService;
+    private final SimpMessagingTemplate messagingTemplate;
+
+
+    @MessageMapping("/receiveMessage")
+    public void sendMessage(MessageDto messageDto, Principal principal) {
+        /*
+        * 유효성 검증
+        * 욕설 검증
+        * */
+        chatService.processMessage(messageDto, principal);
+
+    }
 
     @Operation(summary = "채팅 메시지 조회")
     @GetMapping("/rooms/{chatRoomId}/messages")

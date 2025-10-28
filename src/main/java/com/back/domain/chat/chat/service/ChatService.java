@@ -11,6 +11,7 @@ import com.back.domain.chat.chat.repository.RoomParticipantRepository;
 import com.back.domain.chat.redis.service.RedisMessageService;
 import com.back.domain.member.entity.Member;
 import com.back.domain.member.repository.MemberRepository;
+import com.back.domain.member.service.MemberService;
 import com.back.domain.post.entity.Post;
 import com.back.domain.post.repository.PostRepository;
 import com.back.global.exception.ServiceException;
@@ -35,49 +36,20 @@ public class ChatService {
     private final PostRepository postRepository;
     private final RoomParticipantRepository roomParticipantRepository;
     private final RedisMessageService redisMessageService; // Redis 서비스 추가
+    //Facade 혹은 dto로 제공해줄것.
+    private final MemberService memberService;
 
     @Transactional
-    public Message saveMessage(MessageDto chatMessage) {
-        long startTime = System.nanoTime();
-        
-        // 사용자 조회 시간 측정
-        long memberStartTime = System.nanoTime();
-        Member sender = memberRepository.findById(chatMessage.getSenderId())
-                .orElseThrow(() -> new ServiceException("404-3", "존재하지 않는 사용자입니다."));
-        long memberEndTime = System.nanoTime();
-        log.info("⏱️ 사용자 조회 완료 | ID: {} | 소요시간: {}ms", 
-            chatMessage.getSenderId(), (memberEndTime - memberStartTime) / 1_000_000.0);
-
-        // 채팅방 조회 시간 측정
-        long roomStartTime = System.nanoTime();
-        ChatRoom chatRoom = chatRoomRepository.findById(chatMessage.getChatRoomId())
-                .orElseThrow(() -> new ServiceException("404-4", "존재하지 않는 채팅방입니다."));
-        long roomEndTime = System.nanoTime();
-        log.info("⏱️ 채팅방 조회 완료 | ID: {} | 소요시간: {}ms", 
-            chatMessage.getChatRoomId(), (roomEndTime - roomStartTime) / 1_000_000.0);
-
-        // 메시지 생성 및 저장 시간 측정
-        long saveStartTime = System.nanoTime();
-        Message message = new Message(chatMessage , sender);
-        message.setChatRoom(chatRoom);
-        Message savedMessage = messageRepository.save(message);
-        long saveEndTime = System.nanoTime();
-        log.info("⏱️ 메시지 DB 저장 완료 | ID: {} | 소요시간: {}ms", 
-            savedMessage.getId(), (saveEndTime - saveStartTime) / 1_000_000.0);
-
-        // 전체 saveMessage 시간
-        long totalEndTime = System.nanoTime();
-        log.info("💾 saveMessage 전체 완료! 총 소요시간: {}ms", 
-            (totalEndTime - startTime) / 1_000_000.0);
-
-        return savedMessage;
+    public void processMessage(MessageDto chatMessage, Principal principal) {
+       // 메시지 전송자 유효성 검증
+        memberService.validUser(principal.getName());
     }
     @Transactional
     public boolean isParticipant(Long chatRoomId, Long memberId) {
         long startTime = System.nanoTime();
         boolean result = roomParticipantRepository.existsByChatRoomIdAndMemberIdAndIsActiveTrue(chatRoomId, memberId);
         long endTime = System.nanoTime();
-        log.info("🔐 권한 체크 DB 쿼리 완료 | 채팅방: {}, 사용자: {}, 결과: {} | 소요시간: {}ms", 
+        log.info("🔐 권한 체크 DB 쿼리 완료 | 채팅방: {}, 사용자: {}, 결과: {} | 소요시간: {}ms",
             chatRoomId, memberId, result, (endTime - startTime) / 1_000_000.0);
         return result;
     }
@@ -165,21 +137,21 @@ public class ChatService {
     public Long findExistingChatRoom(Long postId, Long requesterId, Long postAuthorId) {
         // 해당 게시글에 대한 요청자가 만든 채팅방이 있는지 확인 (활성/비활성 무관)
         List<ChatRoom> allPostChatRooms = chatRoomRepository.findByPostId(postId);
-        
+
         for (ChatRoom chatRoom : allPostChatRooms) {
             // 이 채팅방의 모든 참여자 확인 (활성/비활성 무관)
             List<RoomParticipant> allParticipants = roomParticipantRepository
                 .findByChatRoomId(chatRoom.getId());
-                
+
             log.debug("채팅방 " + chatRoom.getId() + " 전체 참여자 수: " + allParticipants.size());
-                
+
             // 참여자가 정확히 2명이고, 요청자와 postAuthor가 모두 포함되어 있는지 확인
             if (allParticipants.size() == 2) {
                 boolean hasRequester = allParticipants.stream()
                     .anyMatch(p -> p.getMember().getId().equals(requesterId));
                 boolean hasPostAuthor = allParticipants.stream()
                     .anyMatch(p -> p.getMember().getId().equals(postAuthorId));
-                    
+
                 if (hasRequester && hasPostAuthor) {
                     // 기존 채팅방 발견 - 두 참여자 모두 다시 활성화
                     for (RoomParticipant participant : allParticipants) {
@@ -187,7 +159,7 @@ public class ChatService {
                         participant.setLeftAt(null); // 나간 시간 초기화
                     }
                     roomParticipantRepository.saveAll(allParticipants);
-                    
+
                     log.debug("기존 채팅방 재활용: " + chatRoom.getId());
                     return chatRoom.getId();
                 }
