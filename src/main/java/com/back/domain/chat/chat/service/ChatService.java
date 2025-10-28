@@ -40,10 +40,15 @@ public class ChatService {
     private final MemberService memberService;
 
     @Transactional
-    public void processMessage(MessageDto chatMessage, Principal principal) {
-       // 메시지 전송자 유효성 검증
+    public MessageDto processMessage(MessageDto chatMessage, Principal principal) {
+        // 전송자 유효성 검증
         memberService.validUser(principal.getName());
+        // 메시지 유효성 검증
+
+        return chatMessage;
     }
+
+    // 의미없는 메소드 why? 구독, 발행 체계이기 때문에 어차피 구독 안하면 못 봄
     @Transactional
     public boolean isParticipant(Long chatRoomId, Long memberId) {
         long startTime = System.nanoTime();
@@ -53,6 +58,7 @@ public class ChatService {
             chatRoomId, memberId, result, (endTime - startTime) / 1_000_000.0);
         return result;
     }
+    // 의미없는 메소드 why? 구독, 발행 체계이기 때문에 어차피 구독 안하면 못 봄
     @Transactional
     public List<MessageDto> getChatRoomMessages(Long chatRoomId, Principal principal) {
         Member member = memberRepository.findByEmail(principal.getName())
@@ -77,13 +83,17 @@ public class ChatService {
         // Entity -> DTO 변환
         return messages.stream()
                 .map(message -> {
-                    return new MessageDto(message.getSender().getName(),
-                            message.getContent(),
+                    return new MessageDto(
                             message.getSender().getId(),
-                            message.getChatRoom().getId());
+                            message.getChatRoom().getId(),
+                            message.getSender().getName(),
+                            message.getContent(),
+                            message.getSender().getEmail()
+                    );
                 })
                 .toList();
     }
+
     @Transactional
     public Long createChatRoom(Long postId, String userEmail) {
         if(userEmail == null || userEmail.isEmpty()) {
@@ -239,17 +249,17 @@ public class ChatService {
             log.info("나가는 사용자: {} (ID: {})", leavingMember.getName(), leavingMember.getId());
             log.info("채팅방 ID: {}", chatRoomId);
 
-            // 나가기 알림 메시지 생성
-            MessageDto leaveNotification = new MessageDto();
-            leaveNotification.setSender("System");
-            leaveNotification.setSenderName("시스템");
-            leaveNotification.setContent(leavingMember.getName() + "님이 채팅방을 나갔습니다.");
-            leaveNotification.setSenderId(-1L); // 시스템 메시지 구분용
-            leaveNotification.setChatRoomId(chatRoomId);
-            leaveNotification.setMessageType("LEAVE_NOTIFICATION"); // 메시지 타입 추가
-
-            // Redis를 통해 알림 메시지 발송
-            redisMessageService.publishMessage(leaveNotification);
+//            // 나가기 알림 메시지 생성
+//            MessageDto leaveNotification = new MessageDto();
+//            leaveNotification.setSender("System");
+//            leaveNotification.setSenderName("시스템");
+//            leaveNotification.setContent(leavingMember.getName() + "님이 채팅방을 나갔습니다.");
+//            leaveNotification.setSenderId(-1L); // 시스템 메시지 구분용
+//            leaveNotification.setChatRoomId(chatRoomId);
+//            leaveNotification.setMessageType("LEAVE_NOTIFICATION"); // 메시지 타입 추가
+//
+//            // Redis를 통해 알림 메시지 발송
+//            redisMessageService.publishMessage(leaveNotification);
 
             log.info("✅ 채팅방 나가기 알림 전송 완료");
 

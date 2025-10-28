@@ -30,6 +30,6 @@ public class Message extends BaseEntity {
 
     public Message(MessageDto chatMessage, Member sender) {
         this.sender = sender;
-        this.content = chatMessage.getContent();
+        this.content = chatMessage.content();
     }
 }

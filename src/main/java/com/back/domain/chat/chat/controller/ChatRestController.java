@@ -27,8 +27,8 @@ public class ChatRestController {
         * 유효성 검증
         * 욕설 검증
         * */
-        chatService.processMessage(messageDto, principal);
-
+        MessageDto processedMessageDto = chatService.processMessage(messageDto, principal);
+        messagingTemplate.convertAndSend("/sub/receiveMessage",processedMessageDto);
     }
 
     @Operation(summary = "채팅 메시지 조회")
