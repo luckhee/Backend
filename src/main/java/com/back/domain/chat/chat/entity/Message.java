@@ -1,35 +1,29 @@
 package com.back.domain.chat.chat.entity;
 
-import com.back.domain.chat.chat.dto.MessageDto;
-import com.back.domain.member.entity.Member;
-import com.back.global.jpa.entity.BaseEntity;
-import jakarta.persistence.Entity;
-import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Id;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.mongodb.core.mapping.Document;
 
-@Entity
+import java.time.LocalDateTime;
+
+@Document(collation = "messages")
 @NoArgsConstructor
 @Getter
 @Setter
-public class Message extends BaseEntity {
-    //member, chatroom 관계 설정
-    @ManyToOne
-    private ChatRoom chatRoom;
+public class Message {
+    @Id
+    private String id;
 
-    @ManyToOne
-    private Member sender;
+    private Long senderId;
+    private Long chatRoomId;
 
     private String content;
+    private List<Attachment> attachmentLists;
 
-    public Message(Member sender, String content) {
-        this.sender = sender;
-        this.content = content;
-    }
+    @CreatedDate
+    private LocalDateTime createdAt;
 
-    public Message(MessageDto chatMessage, Member sender) {
-        this.sender = sender;
-        this.content = chatMessage.content();
-    }
 }

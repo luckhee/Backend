@@ -22,11 +22,17 @@ spring:
         order_inserts: true     # INSERT 순서 최적화
         order_updates: true     # UPDATE 순서 최적화
 
-#redis 설정
   data:
     redis:
       host: localhost
       port: 6379
+    mongodb:
+      host: localhost
+      port: 27017
+      database: chatdb
+      username: admin
+      password: dhalwk12!
+      authentication-database: admin
 
 # 테스트용
 cloud:
