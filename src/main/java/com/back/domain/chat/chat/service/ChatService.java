@@ -59,14 +59,9 @@ public class ChatService {
         return chatMessage;
     }
 
-    // 의미없는 메소드 why? 구독, 발행 체계이기 때문에 어차피 구독 안하면 못 봄
     @Transactional
     public boolean isParticipant(Long chatRoomId, Long memberId) {
-        long startTime = System.nanoTime();
         boolean result = roomParticipantRepository.existsByChatRoomIdAndMemberIdAndIsActiveTrue(chatRoomId, memberId);
-        long endTime = System.nanoTime();
-        log.info("🔐 권한 체크 DB 쿼리 완료 | 채팅방: {}, 사용자: {}, 결과: {} | 소요시간: {}ms",
-            chatRoomId, memberId, result, (endTime - startTime) / 1_000_000.0);
         return result;
     }
     // 의미없는 메소드 why? 구독, 발행 체계이기 때문에 어차피 구독 안하면 못 봄

@@ -31,6 +31,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("com.google.cloud:spring-cloud-gcp-starter-storage")
     implementation("com.google.cloud:google-cloud-storage")
+    implementation("org.springframework.boot:spring-boot-starter-data-mongodb")
     compileOnly("org.projectlombok:lombok")
     developmentOnly("org.springframework.boot:spring-boot-devtools")
     testRuntimeOnly("com.h2database:h2")
