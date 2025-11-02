@@ -201,7 +201,7 @@ public class MemberService {
     }
 
     public void validUser(String userEmail) {
-        if(!Boolean.TRUE.equals(isDeleteUser(userEmail))) {
+        if(Boolean.TRUE.equals(isDeletedUser(userEmail))) {
             throw new ServiceException(ResultCode.BAD_REQUEST.code(), "채팅을 보낼 수 없는 사용자 입니다.");
         }
     }
@@ -211,8 +211,7 @@ public class MemberService {
 
 
     /*헬퍼 메소드*/
-    public Boolean isDeleteUser(String userEmail) {
-        //status
+    public Boolean isDeletedUser(String userEmail) {
         boolean status = true;
         Member member = findByEmail(userEmail);
         if(member.getStatus() != Status.ACTIVE) return false;

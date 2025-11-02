@@ -23,10 +23,7 @@ public class ChatRestController {
 
     @MessageMapping("/receiveMessage")
     public void sendMessage(MessageDto messageDto, Principal principal) {
-        /*
-        * 유효성 검증
-        * 욕설 검증
-        * */
+        //메시지 전처리
         MessageDto processedMessageDto = chatService.processMessage(messageDto, principal);
         messagingTemplate.convertAndSend("/sub/receiveMessage",processedMessageDto);
     }

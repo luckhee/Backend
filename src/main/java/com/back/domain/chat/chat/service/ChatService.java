@@ -22,7 +22,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.security.Principal;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 
 @Slf4j
@@ -39,11 +41,20 @@ public class ChatService {
     //Facade 혹은 dto로 제공해줄것.
     private final MemberService memberService;
 
+    private static final HashSet<String> BAD_WORDS = new HashSet<>(Arrays.asList("슈발", "개새낑"));
+
     @Transactional
     public MessageDto processMessage(MessageDto chatMessage, Principal principal) {
         // 전송자 유효성 검증
         memberService.validUser(principal.getName());
+
         // 메시지 유효성 검증
+        String[] words = chatMessage.content().split(" ");
+        for(String word : words) {
+            if(BAD_WORDS.contains(word)) {
+                return chatMessage.filterContent(word);
+            }
+        }
 
         return chatMessage;
     }

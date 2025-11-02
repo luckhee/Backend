@@ -15,4 +15,7 @@ public record MessageDto(
         String content
 )
  {
+     public MessageDto filterContent(String filterMessage) {
+         return new MessageDto(senderId, chatRoomId, senderName, senderEmail, filterMessage);
+     }
  }
