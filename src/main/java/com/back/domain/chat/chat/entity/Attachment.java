@@ -9,7 +9,7 @@ import java.util.Map;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-//static 설정 할지 말지 고민해보심
+//static 설정 할지 말지 고민해보심 File 관련해서 Attachment
 public class Attachment {
     private String type;
     private String url;
