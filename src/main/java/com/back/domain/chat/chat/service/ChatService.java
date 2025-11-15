@@ -90,11 +90,11 @@ public class ChatService {
         return messages.stream()
                 .map(message -> {
                     return new MessageDto(
-                            message.getSender().getId(),
-                            message.getChatRoom().getId(),
-                            message.getSender().getName(),
-                            message.getContent(),
-                            message.getSender().getEmail()
+                            message.getSenderId(),
+                            message.getChatRoomId(),
+                            //message.getSender().getName(),
+                            message.getContent()
+                            //message.getSender().getEmail()
                     );
                 })
                 .toList();
