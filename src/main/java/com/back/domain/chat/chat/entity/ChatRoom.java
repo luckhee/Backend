@@ -28,9 +28,8 @@ public class ChatRoom extends BaseEntity {
     // 채팅방 이름 (자동 생성 또는 사용자 지정)
     private String roomName;
 
-    // 메시지와의 관계 설정 (CASCADE로 ChatRoom 삭제 시 Message도 함께 삭제)
-    @OneToMany(mappedBy = "chatRoom", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Message> messages;
+    // NOTE: Message는 MongoDB에 저장되므로 JPA 관계 매핑을 사용하지 않습니다.
+    // 메시지는 chatRoomId로 조회합니다.
 
     // 참여자와의 관계 설정 (CASCADE로 ChatRoom 삭제 시 RoomParticipant도 함께 삭제)
     @OneToMany(mappedBy = "chatRoom", cascade = CascadeType.ALL, orphanRemoval = true)

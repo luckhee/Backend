@@ -1,7 +1,6 @@
 package com.back.global.init;
 
 import com.back.domain.chat.chat.entity.ChatRoom;
-import com.back.domain.chat.chat.entity.Message;
 import com.back.domain.chat.chat.repository.ChatRoomRepository;
 import com.back.domain.chat.chat.repository.MessageRepository;
 import com.back.domain.member.entity.Member;
@@ -66,17 +65,17 @@ public class ChatDataInitializer implements ApplicationRunner {
             log.info("조회 결과: member.isPresent()={}, chatRoom.isPresent()={}",
                     member.isPresent(), chatRoom.isPresent());
 
-            if (member.isPresent() && chatRoom.isPresent()) {
-                Message message = new Message();
-                message.setSender(member.get());
-                message.setChatRoom(chatRoom.get());
-                message.setContent(content);
-
-                messageRepository.save(message);
-                log.info("채팅 메시지 '{}' 이 생성되었습니다. (발신자: {})", content, senderName);
-            } else {
-                log.warn("메시지 생성 실패: Member(ID:{}) 또는 ChatRoom(ID:{})을 찾을 수 없습니다.", senderId, chatRoomId);
-            }
+//            if (member.isPresent() && chatRoom.isPresent()) {
+//                Message message = new Message();
+//                message.setSender(member.get());
+//                message.setChatRoom(chatRoom.get());
+//                message.setContent(content);
+//
+//                messageRepository.save(message);
+//                log.info("채팅 메시지 '{}' 이 생성되었습니다. (발신자: {})", content, senderName);
+//            } else {
+//                log.warn("메시지 생성 실패: Member(ID:{}) 또는 ChatRoom(ID:{})을 찾을 수 없습니다.", senderId, chatRoomId);
+//            }
         } catch (Exception e) {
             log.error("메시지 생성 중 오류 발생: {}", e.getMessage());
         }
