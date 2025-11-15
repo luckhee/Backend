@@ -26,10 +26,10 @@ public class RedisMessageService {
         long startTime = System.nanoTime();
         try {
             log.info("=== Redis로 메시지 발행 [시작: {}ns] ===", startTime);
-            log.info("채팅방: {}, 발신자: {}, 내용: {}",
-                    message.getChatRoomId(),
-                    message.getSenderName(),
-                    message.getContent());
+//            log.info("채팅방: {}, 발신자: {}, 내용: {}",
+//                    message.getChatRoomId(),
+//                    message.getSenderName(),
+//                    message.getContent());
 
             // JSON 변환 시간 측정
             long jsonStartTime = System.nanoTime();
@@ -41,17 +41,17 @@ public class RedisMessageService {
             long redisPublishStartTime = System.nanoTime();
             redisTemplate.convertAndSend(chatTopic.getTopic(), messageJson);
             long redisPublishEndTime = System.nanoTime();
-            log.info("⏱️ Redis 채널 발행 완료 | 토픽: {} | 소요시간: {}ms", 
+            log.info("⏱️ Redis 채널 발행 완료 | 토픽: {} | 소요시간: {}ms",
                 chatTopic.getTopic(), (redisPublishEndTime - redisPublishStartTime) / 1_000_000.0);
 
             // 전체 Redis 발행 시간
             long totalEndTime = System.nanoTime();
-            log.info("✅ Redis 메시지 발행 전체 완료! 총 소요시간: {}ms", 
+            log.info("✅ Redis 메시지 발행 전체 완료! 총 소요시간: {}ms",
                 (totalEndTime - startTime) / 1_000_000.0);
 
         } catch (Exception e) {
             long errorTime = System.nanoTime();
-            log.error("❌ Redis 메시지 발행 중 에러 발생 ({}ms): {}", 
+            log.error("❌ Redis 메시지 발행 중 에러 발생 ({}ms): {}",
                 (errorTime - startTime) / 1_000_000.0, e.getMessage(), e);
             throw new ServiceException("400-1","메시지 발행 실패");
         }
