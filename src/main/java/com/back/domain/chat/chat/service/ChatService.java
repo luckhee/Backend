@@ -59,6 +59,41 @@ public class ChatService {
         return chatMessage;
     }
 
+    /**
+     * 메시지 저장 및 처리 (테스트용 - Principal 없이)
+     */
+    @Transactional
+    public MessageDto saveAndProcessMessage(MessageDto messageDto) {
+        // 메시지 유효성 검증 (욕설 필터링)
+        String filteredContent = messageDto.content();
+        String[] words = filteredContent.split(" ");
+        for(String word : words) {
+            if(BAD_WORDS.contains(word)) {
+                filteredContent = filteredContent.replace(word, "***");
+            }
+        }
+
+        // MongoDB에 메시지 저장
+        Message message = new Message();
+        message.setSenderId(messageDto.senderId());
+        message.setChatRoomId(messageDto.chatRoomId());
+        message.setContent(filteredContent);
+        message.setCreatedAt(LocalDateTime.now());
+//        message.setAttachmentLists(messageDto.attachmentLists() != null ? messageDto.attachmentLists() : List.of());
+
+        Message savedMessage = messageRepository.save(message);
+
+        log.info("메시지 저장 완료 - ID: {}, ChatRoomId: {}, SenderId: {}",
+            savedMessage.getId(), savedMessage.getChatRoomId(), savedMessage.getSenderId());
+
+        // DTO로 변환하여 반환
+        return new MessageDto(
+            savedMessage.getSenderId(),
+            savedMessage.getChatRoomId(),
+            savedMessage.getContent()
+        );
+    }
+
     @Transactional
     public boolean isParticipant(Long chatRoomId, Long memberId) {
         boolean result = roomParticipantRepository.existsByChatRoomIdAndMemberIdAndIsActiveTrue(chatRoomId, memberId);
