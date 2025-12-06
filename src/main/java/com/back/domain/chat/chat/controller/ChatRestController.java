@@ -22,10 +22,12 @@ public class ChatRestController {
 
 
     @MessageMapping("/receiveMessage")
-    public void sendMessage(MessageDto messageDto, Principal principal) {
-        //메시지 전처리
-        MessageDto processedMessageDto = chatService.processMessage(messageDto, principal);
-        messagingTemplate.convertAndSend("/sub/receiveMessage",processedMessageDto);
+    public void sendMessage(MessageDto messageDto) {
+        //메시지 저장 및 전처리
+        MessageDto savedMessageDto = chatService.saveAndProcessMessage(messageDto);
+
+        // 해당 채팅방을 구독하는 모든 사용자에게 브로드캐스트
+        messagingTemplate.convertAndSend("/sub/receiveMessage", savedMessageDto);
     }
 
     @Operation(summary = "채팅 메시지 조회")

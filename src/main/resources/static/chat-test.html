@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket 채팅 테스트</title>
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f0f2f5;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: #0084ff;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        .connection-panel {
+            padding: 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+        }
+        .input-group {
+            margin-bottom: 15px;
+        }
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #495057;
+        }
+        .input-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ced4da;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .btn-primary {
+            background: #0084ff;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #0073e6;
+        }
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+        .btn-danger:hover {
+            background: #c82333;
+        }
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        .btn-success:hover {
+            background: #218838;
+        }
+        .status {
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 5px;
+            font-weight: 600;
+        }
+        .status.connected {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status.disconnected {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .chat-container {
+            display: flex;
+            flex-direction: column;
+            height: 500px;
+        }
+        .messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: #fff;
+        }
+        .message {
+            margin-bottom: 15px;
+            padding: 10px 15px;
+            border-radius: 18px;
+            max-width: 70%;
+            word-wrap: break-word;
+        }
+        .message.sent {
+            background: #0084ff;
+            color: white;
+            margin-left: auto;
+            border-bottom-right-radius: 4px;
+        }
+        .message.received {
+            background: #e4e6eb;
+            color: #050505;
+            margin-right: auto;
+            border-bottom-left-radius: 4px;
+        }
+        .message-info {
+            font-size: 11px;
+            margin-top: 5px;
+            opacity: 0.8;
+        }
+        .input-area {
+            padding: 15px;
+            background: #f8f9fa;
+            border-top: 1px solid #dee2e6;
+            display: flex;
+            gap: 10px;
+        }
+        .input-area input {
+            flex: 1;
+            padding: 10px 15px;
+            border: 1px solid #ced4da;
+            border-radius: 20px;
+            font-size: 14px;
+        }
+        .input-area button {
+            border-radius: 20px;
+            padding: 10px 25px;
+        }
+        .debug-panel {
+            padding: 20px;
+            background: #f8f9fa;
+            border-top: 1px solid #dee2e6;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .debug-panel h3 {
+            margin-bottom: 10px;
+            color: #495057;
+        }
+        .debug-message {
+            font-size: 12px;
+            font-family: 'Courier New', monospace;
+            padding: 5px;
+            background: #fff;
+            border-left: 3px solid #0084ff;
+            margin-bottom: 5px;
+        }
+        .config-info {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 5px;
+            font-size: 12px;
+        }
+        .config-info strong {
+            color: #856404;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>WebSocket 채팅 테스트</h1>
+            <p>STOMP over WebSocket 연결 테스트</p>
+        </div>
+
+        <div class="connection-panel">
+            <div class="config-info">
+                <strong>현재 서버 설정:</strong><br>
+                - WebSocket 엔드포인트: /chat<br>
+                - 발행(Publish): /pub/receiveMessage<br>
+                - 구독(Subscribe): /sub/receiveMessage
+            </div>
+            <div class="input-group">
+                <label>WebSocket URL</label>
+                <input type="text" id="wsUrl" value="http://localhost:8080/chat" placeholder="http://localhost:8080/chat">
+            </div>
+            <div class="input-group">
+                <label>사용자 ID (senderId)</label>
+                <input type="number" id="senderId" value="1" placeholder="1">
+            </div>
+            <div class="input-group">
+                <label>채팅방 ID (chatRoomId)</label>
+                <input type="number" id="chatRoomId" value="1" placeholder="1">
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn btn-primary" onclick="connect()">연결</button>
+                <button class="btn btn-danger" onclick="disconnect()">연결 해제</button>
+            </div>
+            <div id="status" class="status disconnected">연결 안 됨</div>
+        </div>
+
+        <div class="chat-container">
+            <div class="messages" id="messages"></div>
+            <div class="input-area">
+                <input type="text" id="messageInput" placeholder="메시지를 입력하세요..." onkeypress="if(event.key==='Enter') sendMessage()">
+                <button class="btn btn-success" onclick="sendMessage()">전송</button>
+            </div>
+        </div>
+
+        <div class="debug-panel">
+            <h3>디버그 로그</h3>
+            <div id="debugLog"></div>
+        </div>
+    </div>
+
+    <script>
+        let stompClient = null;
+        let subscription = null;
+
+        function addDebugLog(message) {
+            const debugLog = document.getElementById('debugLog');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.className = 'debug-message';
+            logEntry.textContent = `[${timestamp}] ${message}`;
+            debugLog.appendChild(logEntry);
+            debugLog.scrollTop = debugLog.scrollHeight;
+        }
+
+        function updateStatus(connected) {
+            const status = document.getElementById('status');
+            if (connected) {
+                status.textContent = '연결됨';
+                status.className = 'status connected';
+            } else {
+                status.textContent = '연결 안 됨';
+                status.className = 'status disconnected';
+            }
+        }
+
+        function connect() {
+            const wsUrl = document.getElementById('wsUrl').value;
+
+            addDebugLog(`연결 시도: ${wsUrl}`);
+
+            const socket = new SockJS(wsUrl);
+            stompClient = Stomp.over(socket);
+
+            stompClient.connect({}, function(frame) {
+                addDebugLog('WebSocket 연결 성공');
+                updateStatus(true);
+
+                // 메시지 구독 - 서버 설정에 맞게 /sub/receiveMessage 구독
+                const subscribeUrl = '/sub/receiveMessage';
+                addDebugLog(`메시지 구독: ${subscribeUrl}`);
+
+                subscription = stompClient.subscribe(subscribeUrl, function(message) {
+                    addDebugLog(`메시지 수신: ${message.body}`);
+                    const messageData = JSON.parse(message.body);
+                    displayMessage(messageData, false);
+                });
+
+            }, function(error) {
+                addDebugLog(`연결 실패: ${error}`);
+                updateStatus(false);
+                console.error('Connection error:', error);
+            });
+        }
+
+        function disconnect() {
+            if (subscription) {
+                subscription.unsubscribe();
+                addDebugLog('구독 해제됨');
+            }
+            if (stompClient) {
+                stompClient.disconnect(function() {
+                    addDebugLog('WebSocket 연결 해제됨');
+                    updateStatus(false);
+                });
+            }
+        }
+
+        function sendMessage() {
+            const messageInput = document.getElementById('messageInput');
+            const content = messageInput.value.trim();
+
+            if (!content) {
+                alert('메시지를 입력하세요');
+                return;
+            }
+
+            if (!stompClient || !stompClient.connected) {
+                alert('먼저 연결해주세요');
+                return;
+            }
+
+            const senderId = document.getElementById('senderId').value;
+            const chatRoomId = document.getElementById('chatRoomId').value;
+
+            const messageData = {
+                senderId: parseInt(senderId),
+                chatRoomId: parseInt(chatRoomId),
+                content: content,
+                attachmentLists: []
+            };
+
+            addDebugLog(`메시지 전송: ${JSON.stringify(messageData)}`);
+
+            // 서버 설정에 맞게 /pub/receiveMessage로 전송
+            stompClient.send('/pub/receiveMessage', {}, JSON.stringify(messageData));
+
+            // 내가 보낸 메시지 표시
+            displayMessage(messageData, true);
+
+            messageInput.value = '';
+        }
+
+        function displayMessage(messageData, isSent) {
+            const messagesDiv = document.getElementById('messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isSent ? 'sent' : 'received'}`;
+
+            const contentDiv = document.createElement('div');
+            contentDiv.textContent = messageData.content;
+
+            const infoDiv = document.createElement('div');
+            infoDiv.className = 'message-info';
+            const time = messageData.createdAt ? new Date(messageData.createdAt).toLocaleTimeString() : new Date().toLocaleTimeString();
+            infoDiv.textContent = `발신자: ${messageData.senderId} | 채팅방: ${messageData.chatRoomId} | ${time}`;
+
+            messageDiv.appendChild(contentDiv);
+            messageDiv.appendChild(infoDiv);
+            messagesDiv.appendChild(messageDiv);
+
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        // 페이지 로드 시
+        window.onload = function() {
+            addDebugLog('채팅 테스트 페이지 로드됨');
+            addDebugLog('서버 설정: 엔드포인트=/chat, 발행=/pub/receiveMessage, 구독=/sub/receiveMessage');
+            addDebugLog('연결 버튼을 클릭하여 WebSocket 연결을 시작하세요');
+        };
+
+        // 페이지 벗어날 때 연결 해제
+        window.onbeforeunload = function() {
+            disconnect();
+        };
+    </script>
+</body>
+</html>
