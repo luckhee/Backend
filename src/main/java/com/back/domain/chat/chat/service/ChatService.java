@@ -244,11 +244,19 @@ public class ChatService {
                     Message lastMessage = messageRepository.findFirstByChatRoomIdOrderByCreatedAtDesc(chatRoom.getId());
                     String lastContent = (lastMessage != null) ? lastMessage.getContent() : "대화를 시작해보세요.";
 
+                    // 채팅방의 모든 활성 참여자 이메일 가져오기
+                    List<String> participantEmails = roomParticipantRepository
+                            .findByChatRoomIdAndIsActiveTrue(chatRoom.getId())
+                            .stream()
+                            .map(p -> p.getMember().getEmail())
+                            .toList();
+
                     return new ChatRoomDto(
                             chatRoom.getId(),
                             chatRoom.getRoomName(),
                             chatRoom.getPost().getId(),
-                            lastContent
+                            lastContent,
+                            participantEmails
                     );
                 })
                 .toList();
