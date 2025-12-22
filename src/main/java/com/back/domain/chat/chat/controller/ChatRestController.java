@@ -26,8 +26,12 @@ public class ChatRestController {
         //메시지 저장 및 전처리
         MessageDto savedMessageDto = chatService.saveAndProcessMessage(messageDto);
 
-        // 해당 채팅방을 구독하는 모든 사용자에게 브로드캐스트
-        messagingTemplate.convertAndSend("/sub/receiveMessage", savedMessageDto);
+        //유니캐스트를 위해 대화 상대방 ID 추출
+        String targetedUserEmail = savedMessageDto.targetUserEmail();
+
+
+        // 유니캐스트 방식
+        messagingTemplate.convertAndSendToUser(targetedUserEmail,"/sub/receiveMessage", savedMessageDto);
     }
 
     @Operation(summary = "채팅 메시지 조회")

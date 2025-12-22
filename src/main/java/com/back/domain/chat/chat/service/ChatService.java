@@ -75,10 +75,11 @@ public class ChatService {
 
         // MongoDB에 메시지 저장
         Message message = new Message();
-        message.setSenderId(messageDto.senderId());
-        message.setChatRoomId(messageDto.chatRoomId());
-        message.setContent(filteredContent);
-        message.setCreatedAt(LocalDateTime.now());
+        message.updateSenderId(messageDto.senderId());
+        message.updateTargetUserEmail(messageDto.targetUserEmail());
+        message.updateChatRoomId(messageDto.chatRoomId());
+        message.updateContent(filteredContent);
+        message.updateCreatedAt(LocalDateTime.now());
 //        message.setAttachmentLists(messageDto.attachmentLists() != null ? messageDto.attachmentLists() : List.of());
 
         Message savedMessage = messageRepository.save(message);
@@ -89,6 +90,7 @@ public class ChatService {
         // DTO로 변환하여 반환
         return new MessageDto(
             savedMessage.getSenderId(),
+            savedMessage.getTargetUserEmail(),
             savedMessage.getChatRoomId(),
             savedMessage.getContent()
         );
@@ -126,6 +128,7 @@ public class ChatService {
                 .map(message -> {
                     return new MessageDto(
                             message.getSenderId(),
+                            message.getTargetUserEmail(),
                             message.getChatRoomId(),
                             //message.getSender().getName(),
                             message.getContent()
