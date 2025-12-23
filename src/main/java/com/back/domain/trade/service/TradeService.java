@@ -28,7 +28,7 @@ public class TradeService {
     //거래 생성
     @Transactional
     public Trade createTrade(Long postId, Long buyerId) {
-        Post post = postRepository.findById(postId)
+        Post post = postRepository.findByIdForUpdate(postId)
                 .orElseThrow(() -> new ServiceException("404-1", "게시글을 찾을 수 없습니다."));
 
         if (post.getStatus() == Post.Status.SOLD_OUT) {
